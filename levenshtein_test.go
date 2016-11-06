@@ -2,6 +2,7 @@ package editdistance
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"testing"
 )
@@ -57,7 +58,7 @@ func TestDistanceForStrings(t *testing.T) {
 	}
 }
 
-func ExampleDistanceForStrings() {
+func ExampleNewMatrix() {
 	source := "a"
 	target := "aa"
 
@@ -67,7 +68,7 @@ func ExampleDistanceForStrings() {
 	// Output: Distance between "a" and "aa" computed as 1
 }
 
-func ExampleWriteMatrix() {
+func ExampleWrite() {
 	pair := NewRunes("neighbor", "Neighbour")
 
 	ops := []EditOperation{
@@ -78,34 +79,7 @@ func ExampleWriteMatrix() {
 	}
 
 	matrix := NewMatrix(pair, ops)
-	matrix.Write(pair, os.Stdout)
-	// Output:
-	//       N  e  i  g  h  b  o  u  r
-	//    0  1  2  3  4  5  6  7  8  9
-	// n  1  2  3  4  5  6  7  8  9 10
-	// e  2  3  2  3  4  5  6  7  8  9
-	// i  3  4  3  2  3  4  5  6  7  8
-	// g  4  5  4  3  2  3  4  5  6  7
-	// h  5  6  5  4  3  2  3  4  5  6
-	// b  6  7  6  5  4  3  2  3  4  5
-	// o  7  8  7  6  5  4  3  2  3  4
-	// r  8  9  8  7  6  5  4  3  4  3
-}
-
-func ExampleWriteMatrixFor() {
-	source := "neighbor"
-	target := "Neighbour"
-	pair := NewRunes(source, target)
-
-	ops := []EditOperation{
-		Match{},
-		Insertion{1},
-		Deletion{1},
-		Substitution{2},
-	}
-
-	matrix := NewMatrix(pair, ops)
-	matrix.Write(pair, os.Stdout)
+	Write(matrix, pair, os.Stdout)
 	// Output:
 	//       N  e  i  g  h  b  o  u  r
 	//    0  1  2  3  4  5  6  7  8  9
@@ -133,7 +107,9 @@ var wordTestCases = []struct {
 }
 
 func checkWordDist(t *testing.T, name string, source, target []string, correctDistance int) {
-	distance := NewMatrix(Words{Source: source, Target: target}, DefaultLevenshtein).Distance()
+	words := Words{Source: source, Target: target}
+	matrix := NewMatrix(words, DefaultLevenshtein)
+	distance := matrix.Distance()
 
 	if distance != correctDistance {
 		t.Log(
@@ -148,10 +124,12 @@ func checkWordDist(t *testing.T, name string, source, target []string, correctDi
 			correctDistance)
 		t.Fail()
 	}
+	editScript := matrix.EditScript(words, DefaultLevenshtein)
+	log.Printf("  %v, %v: script: %+v", source, target, editScript)
 }
 
 func TestWords(t *testing.T) {
-	ExampleWriteMatrix()
+	ExampleWrite()
 	for _, testCase := range wordTestCases {
 		checkWordDist(t, "word-Levenshtein", testCase.source, testCase.target, testCase.distance)
 	}

@@ -1,13 +1,13 @@
 package editdistance
 
-var DefaultLevenshtein []EditOperation = []EditOperation{
+var DefaultLevenshtein = EditOperations{
 	Match{},
 	Insertion{1},
 	Deletion{1},
 	Substitution{1},
 }
 
-var DefaultDamerau []EditOperation = []EditOperation{
+var DefaultDamerau = EditOperations{
 	Match{},
 	Insertion{1},
 	Deletion{1},
@@ -15,7 +15,7 @@ var DefaultDamerau []EditOperation = []EditOperation{
 	Transposition{1},
 }
 
-var DefaultLCS []EditOperation = []EditOperation{
+var DefaultLCS = EditOperations{
 	Match{},
 	Insertion{1},
 	Deletion{1},

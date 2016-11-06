@@ -5,53 +5,29 @@ import (
 	"io"
 )
 
-type Matrix [][]int
-
-// Distance reads the edit distance off the Levenshtein matrix.
-func (matrix Matrix) Distance() int {
-	return matrix[len(matrix)-1][len(matrix[0])-1]
-}
-
-func (matrix Matrix) Write(p StringSequencePair, writer io.Writer) {
-	fmt.Fprintf(writer, "    ")
-	for j := 0; j < p.TargetLen(); j++ {
-		targetRune := p.TargetAt(j)
-		fmt.Fprintf(writer, "  %s", targetRune)
+type (
+	StringSequencePair interface {
+		SequencePair
+		SourceAt(i int) string
+		TargetAt(i int) string
 	}
-	fmt.Fprintf(writer, "\n")
-	fmt.Fprintf(writer, "  %2d", matrix[0][0])
-	for j := 0; j < p.TargetLen(); j++ {
-		fmt.Fprintf(writer, " %2d", matrix[0][j+1])
+
+	Runes struct {
+		Source []rune
+		Target []rune
 	}
-	fmt.Fprintf(writer, "\n")
-	for i := 0; i < p.SourceLen(); i++ {
-		sourceRune := p.SourceAt(i)
-		fmt.Fprintf(writer, "%s %2d", sourceRune, matrix[i+1][0])
-		for j := 0; j < p.TargetLen(); j++ {
-			fmt.Fprintf(writer, " %2d", matrix[i+1][j+1])
-		}
-		fmt.Fprintf(writer, "\n")
+
+	Words struct {
+		Source []string
+		Target []string
 	}
-}
+)
 
-type SequencePair interface {
-	SourceLen() int
-	TargetLen() int
-	Equal(i, j int) bool
-}
+var (
+	_ StringSequencePair = Runes{}
+	_ StringSequencePair = Words{}
+)
 
-type StringSequencePair interface {
-	SequencePair
-	SourceAt(i int) string
-	TargetAt(i int) string
-}
-
-type Runes struct {
-	Source []rune
-	Target []rune
-}
-
-var _ StringSequencePair = Runes{}
 
 func NewRunes(source, target string) Runes {
 	return Runes{
@@ -76,12 +52,6 @@ func (r Runes) TargetAt(i int) string {
 	return string(r.Target[i])
 }
 
-type Words struct {
-	Source []string
-	Target []string
-}
-
-var _ StringSequencePair = Words{}
 
 func (w Words) SourceLen() int {
 	return len(w.Source)
@@ -97,4 +67,27 @@ func (w Words) SourceAt(i int) string {
 }
 func (w Words) TargetAt(i int) string {
 	return w.Target[i]
+}
+
+
+func Write(matrix Matrix, p StringSequencePair, writer io.Writer) {
+	fmt.Fprint(writer, "    ")
+	for j := 0; j < p.TargetLen(); j++ {
+		targetRune := p.TargetAt(j)
+		fmt.Fprintf(writer, "  %s", targetRune)
+	}
+	fmt.Fprintln(writer)
+	fmt.Fprintf(writer, "  %2d", matrix[0][0])
+	for j := 0; j < p.TargetLen(); j++ {
+		fmt.Fprintf(writer, " %2d", matrix[0][j+1])
+	}
+	fmt.Fprintln(writer)
+	for i := 0; i < p.SourceLen(); i++ {
+		sourceRune := p.SourceAt(i)
+		fmt.Fprintf(writer, "%s %2d", sourceRune, matrix[i+1][0])
+		for j := 0; j < p.TargetLen(); j++ {
+			fmt.Fprintf(writer, " %2d", matrix[i+1][j+1])
+		}
+		fmt.Fprintln(writer)
+	}
 }
