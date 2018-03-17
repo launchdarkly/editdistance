@@ -2,8 +2,8 @@ package editdistance
 
 import (
 	"fmt"
-	"log"
 	"os"
+	"reflect"
 	"testing"
 )
 
@@ -97,16 +97,17 @@ var wordTestCases = []struct {
 	source   []string
 	target   []string
 	distance int
+	script   EditScript
 }{
-	{[]string{"Hello", "Word"}, []string{"Hello", "Word"}, 0},
-	{[]string{"Hello", "Word"}, []string{"Hello"}, 1},
-	{[]string{"Hello", "Word"}, []string{"Hello", "Beautiful", "Word"}, 1},
-	{[]string{"Hello", "Word"}, []string{"My", "Word"}, 1},
-	{[]string{"Hello", "Word"}, []string{"What", "a", "Beautiful", "Word"}, 3},
-	{[]string{"What", "a", "dangerous", "Word"}, []string{"What", "a", "Beautiful", "Word"}, 1},
+	{[]string{"Hello", "Word"}, []string{"Hello", "Word"}, 0, EditScript{Match{}, Match{}}},
+	{[]string{"Hello", "Word"}, []string{"Hello"}, 1, EditScript{Match{}, Deletion{1}}},
+	{[]string{"Hello", "Word"}, []string{"Hello", "Beautiful", "Word"}, 1, EditScript{Match{}, Insertion{1}, Match{}}},
+	{[]string{"Hello", "Word"}, []string{"My", "Word"}, 1, EditScript{Substitution{1}, Match{}}},
+	{[]string{"Hello", "Word"}, []string{"What", "a", "Beautiful", "Word"}, 3, EditScript{Substitution{1}, Insertion{1}, Insertion{1}, Match{}}},
+	{[]string{"What", "a", "dangerous", "Word"}, []string{"What", "a", "Beautiful", "Word"}, 1, EditScript{Match{}, Match{}, Substitution{1}, Match{}}},
 }
 
-func checkWordDist(t *testing.T, name string, source, target []string, correctDistance int) {
+func checkWordDist(t *testing.T, name string, source, target []string, correctDistance int, correctEditScript EditScript) {
 	words := Words{Source: source, Target: target}
 	matrix := NewMatrix(words, DefaultLevenshtein)
 	distance := matrix.Distance()
@@ -124,14 +125,27 @@ func checkWordDist(t *testing.T, name string, source, target []string, correctDi
 			correctDistance)
 		t.Fail()
 	}
+
 	editScript := matrix.EditScript(words, DefaultLevenshtein)
-	log.Printf("  %v, %v: script: %+v", source, target, editScript)
+	if !reflect.DeepEqual(editScript, correctEditScript) {
+		t.Log(
+			name,
+			"edit script between",
+			source,
+			"and",
+			target,
+			"computed as",
+			editScript,
+			", should be",
+			correctEditScript)
+		t.Fail()
+	}
 }
 
 func TestWords(t *testing.T) {
 	ExampleWrite()
 	for _, testCase := range wordTestCases {
-		checkWordDist(t, "word-Levenshtein", testCase.source, testCase.target, testCase.distance)
+		checkWordDist(t, "word-Levenshtein", testCase.source, testCase.target, testCase.distance, testCase.script)
 	}
 
 }
