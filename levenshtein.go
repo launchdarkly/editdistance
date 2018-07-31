@@ -93,7 +93,7 @@ func (m Matrix) EditScript(seqPair SequencePair, ops EditOperations) (EditScript
 	indices := []TemporalIndices{}
 	op := ops.Find(seqPair, m, i, j)
 	for op != nil {
-		indices = append(indices, TemporalIndices{i, j})
+		indices = append(indices, TemporalIndices{i - 1, j - 1})
 		script = append(script, op)
 		i, j = op.Backtrack(m, i, j)
 		op = ops.Find(seqPair, m, i, j)
