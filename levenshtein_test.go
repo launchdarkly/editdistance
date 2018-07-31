@@ -126,7 +126,7 @@ func checkWordDist(t *testing.T, name string, source, target []string, correctDi
 		t.Fail()
 	}
 
-	editScript := matrix.EditScript(words, DefaultLevenshtein)
+	editScript, _ := matrix.EditScript(words, DefaultLevenshtein)
 	if !reflect.DeepEqual(editScript, correctEditScript) {
 		t.Log(
 			name,

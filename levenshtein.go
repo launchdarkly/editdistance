@@ -6,6 +6,11 @@ import (
 )
 
 type (
+	TemporalIndices struct {
+		Source int
+		Target int
+	}
+
 	EditScript []EditOperation
 
 	EditOperations []EditOperation
@@ -81,12 +86,14 @@ func (m Matrix) Distance() int {
 }
 
 // EditScript returns an optimal edit script based on the given Levenshtein matrix.
-func (m Matrix) EditScript(seqPair SequencePair, ops EditOperations) EditScript {
+func (m Matrix) EditScript(seqPair SequencePair, ops EditOperations) (EditScript, []TemporalIndices) {
 	i := len(m) - 1
 	j := len(m[0]) - 1
 	script := EditScript{}
+	indices := []TemporalIndices{}
 	op := ops.Find(seqPair, m, i, j)
 	for op != nil {
+		indices = append(indices, TemporalIndices{i, j})
 		script = append(script, op)
 		i, j = op.Backtrack(m, i, j)
 		op = ops.Find(seqPair, m, i, j)
@@ -94,6 +101,14 @@ func (m Matrix) EditScript(seqPair SequencePair, ops EditOperations) EditScript 
 
 	for k := 0; k < len(script)/2; k++ {
 		script[k], script[len(script)-k-1] = script[len(script)-k-1], script[k]
+		indices[k], indices[len(indices)-k-1] = indices[len(indices)-k-1], indices[k]
 	}
-	return script
+
+	return script, indices
+}
+
+type Operation struct {
+	op          EditOperation
+	sourceIndex int
+	targetIndex int
 }
